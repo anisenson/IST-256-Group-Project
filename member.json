@@ -1,0 +1,13 @@
+// Elliot Buna Portion
+// -- This is a sample JSON file representing a member object. -->
+
+{
+  "name": "John Doe",
+  "id": 001,
+  "active": true,
+  "roles": ["admin", "member"],
+  "meta": {
+    "createdAt": "2026-10-01T00:00:00Z",
+    "status": "active"
+  }
+}
