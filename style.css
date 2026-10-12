@@ -1,3 +1,95 @@
+body {
+    background-color: #f4f6f9;
+    color: #222;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+html, body {
+    min-height: 100vh;
+}
+
+/* Nav bar */
+.navbar {
+    background-color: #001e44 !important;
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    color: white;
+    font-weight: bold;
+}
+
+.navbar-brand:hover {
+    color: #cce5ff;
+}
+
+.navbar .nav-link {
+    color: white;
+}
+
+.navbar .nav-link:hover {
+    color: #cce5ff;
+}
+
+.navbar .nav-link.active {
+    color: white;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+main {
+    padding-bottom: 40px;
+    flex: 1;
+}
+
 h1 {
-    color: blue;
+    color: #001e44;
+    font-weight: bold;
+}
+
+h5 {
+    color: #555;
+}
+
+/* Activity and meeting cards */
+.card {
+    border: none;
+    border-top: 5px solid #001e44;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 25px;
+}
+
+.card-title {
+    color: #001e44;
+    margin-bottom: 15px;
+}
+
+.card li {
+    margin-bottom: 10px;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #001e44;
+    border-color: #001e44;
+}
+
+.btn-primary:hover {
+    background-color: #003b73;
+    border-color: #003b73;
+}
+
+
+/* Footer */
+footer {
+    background-color: #001e44;
+    color: white;
+    text-align: center;
+    padding: 20px;
 }
