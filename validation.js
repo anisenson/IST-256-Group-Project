@@ -1,27 +1,33 @@
 // validation.js - Member signup form validation (Nasser Almalki)
-// Checks every field when the form is submitted and shows an error
-// under any field that is wrong. If everything is valid, it builds a
-// member object and passes it to saveMember() in script.js.
 
 const form = document.getElementById("signupForm");
 const message = document.getElementById("message");
+const submitButton = document.getElementById("submitButton");
 
-// Marks a field red and puts the error text in its error div
+// Mark an invalid field and show its error.
 function showError(input, text) {
     input.classList.remove("is-valid");
     input.classList.add("is-invalid");
     document.getElementById(input.id + "Error").textContent = text;
 }
 
-// Marks a field green
+// Mark a valid field.
 function showValid(input) {
     input.classList.remove("is-invalid");
     input.classList.add("is-valid");
+    document.getElementById(input.id + "Error").textContent = "";
 }
 
-// Removes red/green from a field
+// Remove validation styling and error text.
 function clearField(input) {
     input.classList.remove("is-invalid", "is-valid");
+    document.getElementById(input.id + "Error").textContent = "";
+}
+
+function clearErrors() {
+    form.querySelectorAll(".form-control").forEach(clearField);
+    message.textContent = "";
+    message.className = "mt-3";
 }
 
 function validateName() {
@@ -32,15 +38,17 @@ function validateName() {
         showError(input, "Please enter your full name.");
         return false;
     }
-    // letters only, words can be separated by a space, hyphen, or apostrophe
+
     if (!/^[A-Za-z]+([ '-][A-Za-z]+)*$/.test(name)) {
         showError(input, "Name can only contain letters, spaces, hyphens, and apostrophes.");
         return false;
     }
+
     if (!name.includes(" ")) {
         showError(input, "Please enter your first and last name.");
         return false;
     }
+
     showValid(input);
     return true;
 }
@@ -53,11 +61,12 @@ function validateEmail() {
         showError(input, "Please enter your email address.");
         return false;
     }
-    // something@something.something, no spaces
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showError(input, "Please enter a valid email, like name@example.com.");
         return false;
     }
+
     showValid(input);
     return true;
 }
@@ -70,10 +79,12 @@ function validateAge() {
         showError(input, "Please enter your age.");
         return false;
     }
+
     if (!Number.isInteger(age) || age < 16 || age > 99) {
         showError(input, "Age must be a whole number between 16 and 99.");
         return false;
     }
+
     showValid(input);
     return true;
 }
@@ -86,10 +97,12 @@ function validateAddress() {
         showError(input, "Please enter your address.");
         return false;
     }
+
     if (address.length < 5) {
         showError(input, "Address looks too short.");
         return false;
     }
+
     showValid(input);
     return true;
 }
@@ -98,59 +111,66 @@ function validatePhone() {
     const input = document.getElementById("phone");
     const phone = input.value.trim();
 
-    // phone is optional, so an empty box is fine
     if (phone === "") {
         clearField(input);
         return true;
     }
-    // allow formats like (814) 555-1234 by only counting the digits
+
     const digits = phone.replace(/\D/g, "");
+
     if (!/^[\d\s()+.-]+$/.test(phone) || digits.length !== 10) {
         showError(input, "Phone number must have 10 digits, like 814-555-1234.");
         return false;
     }
+
     showValid(input);
     return true;
 }
 
+// Validate every field before adding or updating a member.
 form.addEventListener("submit", function (event) {
-    // stop the page from reloading
     event.preventDefault();
 
-    // run every check (not just until the first error) so all errors show at once
     const nameOk = validateName();
     const emailOk = validateEmail();
     const ageOk = validateAge();
     const addressOk = validateAddress();
     const phoneOk = validatePhone();
 
-    if (nameOk && emailOk && ageOk && addressOk && phoneOk) {
-        const member = {
-            fullName: document.getElementById("fullName").value.trim(),
-            email: document.getElementById("email").value.trim(),
-            age: Number(document.getElementById("age").value),
-            address: document.getElementById("address").value.trim(),
-            phone: document.getElementById("phone").value.trim()
-        };
-
-        // saveMember is written in script.js by the storage person
-        if (typeof saveMember === "function") {
-            saveMember(member);
-        }
-
-        message.className = "alert alert-success mt-3";
-        message.textContent = "Thanks, " + member.fullName + "! You're signed up.";
-
-        form.reset();
-        form.querySelectorAll(".form-control").forEach(clearField);
-    } else {
+    if (!(nameOk && emailOk && ageOk && addressOk && phoneOk)) {
         message.className = "alert alert-danger mt-3";
         message.textContent = "Please fix the fields marked in red.";
+        form.querySelector(".is-invalid").focus();
+        return;
     }
+
+    const member = {
+        fullName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        age: Number(document.getElementById("age").value),
+        address: document.getElementById("address").value.trim(),
+        phone: document.getElementById("phone").value.trim()
+    };
+
+    const updating = editingIndex !== -1;
+
+    if (!saveMember(member)) {
+        message.className = "alert alert-danger mt-3";
+        message.textContent = "Could not save. Check your browser storage settings.";
+        return;
+    }
+
+    form.reset();
+    form.querySelectorAll(".form-control").forEach(clearField);
+    submitButton.textContent = "Submit";
+
+    message.className = "alert alert-success mt-3";
+    message.textContent = updating
+        ? "Member updated successfully!"
+        : "Thanks, " + member.fullName + "! You're signed up.";
 });
 
-// once a field has an error, re-check it while the user types
-// so the red goes away as soon as it's fixed
+// Recheck invalid fields while the user types.
 const checks = {
     fullName: validateName,
     email: validateEmail,
