@@ -1,0 +1,16 @@
+[
+  {
+    "fullName": "Alex Johnson",
+    "email": "alex.johnson@example.com",
+    "age": 19,
+    "address": "123 College Ave, State College, PA",
+    "phone": "814-555-1234"
+  },
+  {
+    "fullName": "Maria Lopez",
+    "email": "maria.lopez@example.com",
+    "age": 21,
+    "address": "45 Beaver Ave, State College, PA",
+    "phone": ""
+  }
+]
