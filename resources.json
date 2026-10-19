@@ -1,0 +1,65 @@
+[
+  {
+    "id": "R001",
+    "title": "Python for Everybody",
+    "category": "Python",
+    "format": "Website",
+    "link": "https://www.py4e.com/",
+    "price": 0,
+    "notes": "Free beginner course, good starting point for new members"
+  },
+  {
+    "id": "R002",
+    "title": "MDN HTML Reference",
+    "category": "HTML/CSS",
+    "format": "Website",
+    "link": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+    "price": 0,
+    "notes": "Official docs for every HTML element"
+  },
+  {
+    "id": "R003",
+    "title": "The Modern JavaScript Tutorial",
+    "category": "JavaScript",
+    "format": "Website",
+    "link": "https://javascript.info/",
+    "price": 0,
+    "notes": "Covers basics through advanced topics"
+  },
+  {
+    "id": "R004",
+    "title": "SQLBolt Interactive Lessons",
+    "category": "SQL",
+    "format": "Website",
+    "link": "https://sqlbolt.com/",
+    "price": 0,
+    "notes": "Practice queries right in the browser"
+  },
+  {
+    "id": "R005",
+    "title": "freeCodeCamp Video Courses",
+    "category": "Other",
+    "format": "Video",
+    "link": "https://www.youtube.com/@freecodecamp",
+    "price": 0,
+    "notes": "Full-length courses on many languages"
+  },
+  {
+    "id": "R006",
+    "title": "Bootstrap Basics Workshop",
+    "category": "HTML/CSS",
+    "format": "Workshop",
+    "link": "",
+    "price": 5,
+    "notes": "Two-hour hands-on session, bring a laptop"
+  },
+  {
+    "id": "R007",
+    "title": "Python Cheat Sheet",
+    "category": "Python",
+    "format": "PDF",
+    "link": "",
+    "price": 2.5,
+    "notes": "Printed copies available at club meetings"
+  }
+]
