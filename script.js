@@ -6,16 +6,36 @@ let editingIndex = -1;
 const memberTableBody = document.getElementById("memberTableBody");
 const jsonOutput = document.getElementById("jsonOutput");
 
-// Restore members saved in this browser.
-try {
-    const saved = JSON.parse(localStorage.getItem("clubMembers"));
+// Load saved browser data, or load member.json on first use.
 
-    if (Array.isArray(saved)) {
-        members = saved;
+async function loadMembers() {
+    try {
+        const stored = localStorage.getItem("clubMembers");
+        if (stored !== null) {
+            const saved = JSON.parse(stored);
+            if (!Array.isArray(saved)) {
+                throw new Error("Saved member data must be an array.");
+            }
+            members = saved;
+        } else {
+            const response = await fetch("member.json");
+            if (!response.ok) {
+                throw new Error("Could not load member.json.");
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error("member.json must contain an array.");
+
+            }
+            members = data;
+        }
+        renderTable();
+        renderJson();
+    } catch (error) {
+        console.error(error);
+        alert("Could not load member data. Please use Live Server and check member.json.");
+
     }
-} catch (error) {
-    message.className = "alert alert-danger mt-3";
-    message.textContent = "Previously saved members could not be loaded.";
 }
 
 // Add a new member or update the selected member.
@@ -141,5 +161,4 @@ document.getElementById("downloadJson").addEventListener("click", function () {
     }, 1000);
 });
 
-renderTable();
-renderJson();
+loadMembers();
