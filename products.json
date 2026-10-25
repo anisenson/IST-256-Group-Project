@@ -1,0 +1,66 @@
+[
+  {
+    "productId": "P001",
+    "description": "Python Crash Course Book",
+    "category": "Python",
+    "unit": "each",
+    "price": 29.99,
+    "notes": "Beginner book, used in the club's intro sessions"
+  },
+  {
+    "productId": "P002",
+    "description": "Intro to Python Workshop",
+    "category": "Python",
+    "unit": "per session",
+    "price": 5.00,
+    "notes": "Two-hour hands-on session, bring a laptop"
+  },
+  {
+    "productId": "P003",
+    "description": "HTML and CSS Starter Guide",
+    "category": "HTML/CSS",
+    "unit": "each",
+    "price": 12.50,
+    "notes": "Printed guide covering page structure and styling"
+  },
+  {
+    "productId": "P004",
+    "description": "Bootstrap Layout Workshop",
+    "category": "HTML/CSS",
+    "unit": "per session",
+    "price": 5.00,
+    "notes": "Build a responsive page from scratch"
+  },
+  {
+    "productId": "P005",
+    "description": "JavaScript Practice Pack",
+    "category": "JavaScript",
+    "unit": "each",
+    "price": 8.00,
+    "notes": "50 practice problems with solutions"
+  },
+  {
+    "productId": "P006",
+    "description": "SQL Basics Workbook",
+    "category": "SQL",
+    "unit": "each",
+    "price": 10.00,
+    "notes": "Exercises on queries, joins, and filtering"
+  },
+  {
+    "productId": "P007",
+    "description": "Club Membership",
+    "category": "Other",
+    "unit": "per semester",
+    "price": 15.00,
+    "notes": "Access to all workshops and study sessions"
+  },
+  {
+    "productId": "P008",
+    "description": "Coding Club T-Shirt",
+    "category": "Other",
+    "unit": "each",
+    "price": 18.00,
+    "notes": "Sizes S to XL"
+  }
+]
