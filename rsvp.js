@@ -1,12 +1,27 @@
 // Your name: React RSVP form, validation, and JSON generation.
 const h = React.createElement;
 
+// Madina: RESTful service endpoint (same style as cart.js)
+const API_URL = "api/rsvp";
+
 function RSVPApp() {
-    // Temporary options. A teammate can load these from JSON later.
-    const activities = [
-        { id: "P002", title: "Intro to Python Workshop" },
-        { id: "P004", title: "Bootstrap Layout Workshop" }
-    ];
+    // Madina: load activities from the existing products.json using jQuery
+    const [activities, setActivities] = React.useState([]);
+    const [loadError, setLoadError] = React.useState("");
+
+    React.useEffect(function () {
+        $.getJSON("products.json")
+            .done(function (products) {
+                // Only workshops can be RSVPed to (P002 and P004 right now)
+                const workshops = products.filter(function (item) {
+                    return item.format.startsWith("Workshop");
+                });
+                setActivities(workshops);
+            })
+            .fail(function () {
+                setLoadError("Could not load activities. Please refresh the page.");
+            });
+    }, []);
 
     const [form, setForm] = React.useState({
         name: "",
@@ -18,6 +33,34 @@ function RSVPApp() {
 
     const [errors, setErrors] = React.useState({});
     const [rsvpData, setRsvpData] = React.useState(null);
+    const [sending, setSending] = React.useState(false);
+    const [sendStatus, setSendStatus] = React.useState(null);
+
+    // Madina: send the JSON document to the RESTful API with AJAX
+    function sendRsvp(payload) {
+        setSending(true);
+        setSendStatus(null);
+
+        $.ajax({
+            url: API_URL,
+            method: "POST",
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(payload)
+        })
+            .done(function () {
+                setSendStatus({ type: "success", text: "RSVP submitted successfully." });
+            })
+            .fail(function () {
+                setSendStatus({
+                    type: "warning",
+                    text: "The RSVP could not be sent because the RESTful API is not available yet."
+                });
+            })
+            .always(function () {
+                setSending(false);
+            });
+    }
 
     // Update form values and clear the previous JSON result.
     function handleChange(event) {
@@ -28,6 +71,7 @@ function RSVPApp() {
         });
 
         setRsvpData(null);
+        setSendStatus(null);
     }
 
     // Validate inputs and generate a JSON object.
@@ -67,14 +111,17 @@ function RSVPApp() {
             return;
         }
 
-        setRsvpData({
+        const payload = {
             name: form.name.trim(),
             email: form.email.trim(),
             activityId: activity.id,
             activityTitle: activity.title,
             participation: form.participation,
             notes: form.notes.trim()
-        });
+        };
+
+        setRsvpData(payload);
+        sendRsvp(payload);
     }
 
     // Create a labeled field with an error message.
@@ -150,6 +197,13 @@ function RSVPApp() {
                     h("h2", { className: "card-title" }, "RSVP Details"),
                     h("p", null, "All fields are required except notes."),
 
+                    loadError &&
+                        h(
+                            "p",
+                            { className: "alert alert-danger", role: "alert" },
+                            loadError
+                        ),
+
                     h(
                         "form",
                         { onSubmit: handleSubmit, noValidate: true },
@@ -177,7 +231,11 @@ function RSVPApp() {
 
                         h(
                             "button",
-                            { type: "submit", className: "btn btn-primary" },
+                            {
+                                type: "submit",
+                                className: "btn btn-primary",
+                                disabled: sending
+                            },
                             "Prepare RSVP"
                         )
                     ),
@@ -213,11 +271,15 @@ function RSVPApp() {
                                 },
                                 JSON.stringify(rsvpData, null, 2)
                             ),
-                            h(
-                                "p",
-                                { className: "small text-muted" },
-                                "These details have not been sent to a server."
-                            )
+                            sendStatus &&
+                                h(
+                                    "p",
+                                    {
+                                        className: "alert alert-" + sendStatus.type,
+                                        role: "status"
+                                    },
+                                    sendStatus.text
+                                )
                         )
                 )
             )
