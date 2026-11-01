@@ -93,3 +93,55 @@ footer {
     text-align: center;
     padding: 20px;
 }
+
+/* RSVP page (Nasser) */
+
+/* Form card: a little wider top border so it stands out */
+#rsvpApp .card {
+    border-top-width: 6px;
+}
+
+/* Labels in bold navy so each field is easy to find */
+#rsvpApp .form-label {
+    color: #001e44;
+    font-weight: 600;
+}
+
+/* Navy outline when a field is clicked, instead of Bootstrap's default blue */
+#rsvpApp .form-control:focus,
+#rsvpApp .form-select:focus {
+    border-color: #001e44;
+    box-shadow: 0 0 0 0.2rem rgba(0, 30, 68, 0.25);
+}
+
+/* Keep the red outline on fields that fail validation */
+#rsvpApp .form-control.is-invalid,
+#rsvpApp .form-select.is-invalid {
+    border-color: #dc3545;
+}
+
+/* JSON output box: monospace text, navy edge, scrolls if it gets long */
+#rsvpApp pre {
+    font-family: "Courier New", monospace;
+    font-size: 0.9rem;
+    border-left: 5px solid #001e44 !important;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Gray out the button while the RSVP is being sent */
+#rsvpApp .btn-primary:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* On phones: less padding and a full-width button */
+@media (max-width: 576px) {
+    #rsvpApp .card-body {
+        padding: 15px;
+    }
+
+    #rsvpApp .btn-primary {
+        width: 100%;
+    }
+}
