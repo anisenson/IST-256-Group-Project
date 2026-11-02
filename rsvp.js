@@ -1,4 +1,4 @@
-// Madina: React RSVP form, validation, and JSON generation.
+// Your name: React RSVP form, validation, and JSON generation.
 const h = React.createElement;
 
 // Madina: RESTful service endpoint (same style as cart.js)
@@ -181,6 +181,41 @@ function RSVPApp() {
         );
     }
 
+    function activityDetails() {
+        const selected = activities.find(function (item) {
+            return item.id === form.activity;
+        });
+
+        if (!selected) {
+            return null;
+        }
+
+        function detail(label, value) {
+            return [
+                h("dt", { key: label + "Label", className: "col-4" }, label),
+                h("dd", { key: label + "Value", className: "col-8" }, value)
+            ];
+        }
+
+        return h(
+            "div",
+            {
+                id: "activityDetails",
+                className: "activity-details mb-3",
+                "aria-live": "polite"
+            },
+            h("h3", { className: "h6" }, selected.title),
+            h(
+                "dl",
+                { className: "row mb-0" },
+                ...detail("Category", selected.category),
+                ...detail("Format", selected.format),
+                ...detail("Price", "$" + Number(selected.price).toFixed(2)),
+                ...detail("Details", selected.notes)
+            )
+        );
+    }
+
     return h(
         "div",
         { className: "row justify-content-center" },
@@ -221,6 +256,8 @@ function RSVPApp() {
                                 };
                             })
                         ),
+
+                        activityDetails(),
 
                         field("participation", "Participation Type", [
                             { value: "In person", label: "In person" },
