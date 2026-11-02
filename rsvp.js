@@ -1,4 +1,4 @@
-// Your name: React RSVP form, validation, and JSON generation.
+// Madina: React RSVP form, validation, and JSON generation.
 const h = React.createElement;
 
 // Madina: RESTful service endpoint (same style as cart.js)
