@@ -1,0 +1,25 @@
+{
+  "name": "ist-256-group-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cart.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anisenson/IST-256-Group-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/anisenson/IST-256-Group-Project/issues"
+  },
+  "homepage": "https://github.com/anisenson/IST-256-Group-Project#readme",
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}

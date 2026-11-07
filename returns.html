@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Returns | Penn State Coding Club</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!--Nav Bar -->
+    <header>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">Penn State Coding Club</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu"
+                    aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMenu">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="signup.html">Member Signup</a></li>
+                        <li class="nav-item"><a class="nav-link" href="resources.html">Coding Resources</a></li>
+                        <li class="nav-item"><a class="nav-link" href="cart.html">Shopping Cart</a></li>
+                        <li class="nav-item"><a class="nav-link" href="rsvp.html">Upcoming Events</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="returns.html">Returns</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- AngularJS app (controller is in returns.js) -->
+    <main class="container py-5" id="returnsApp" ng-app="returnsApp" ng-controller="ReturnsController as vm">
+
+        <section class="text-center mb-5">
+            <h1>Returns</h1>
+            <p>Search for the products you want to return, then tell us why.</p>
+        </section>
+
+        <!-- Step 1: jQuery search -->
+        <section class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">1. Find Your Product</h2>
+                <label for="returnSearch" class="form-label">Search by ID, name, or category</label>
+                <input type="search" id="returnSearch" class="form-control mb-3" placeholder="For example: Python"
+                       ng-model="vm.searchTerm" ng-change="vm.search()">
+
+                <table class="table table-striped align-middle">
+                    <tr ng-repeat="p in vm.results">
+                        <td><img class="product-thumb" alt="" ng-src="https://placehold.co/50x50?text={{ p.id }}"></td>
+                        <td><strong>{{ p.title }}</strong><br><small class="text-muted">{{ p.id }} &middot; {{ p.category }}</small></td>
+                        <td>{{ p.price | currency }}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    ng-click="vm.add(p)" ng-disabled="vm.items.indexOf(p) !== -1">Return</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Step 2: return form -->
+        <section class="card">
+            <div class="card-body">
+                <h2 class="card-title">2. Return Details</h2>
+
+                <form ng-submit="vm.submit()" novalidate>
+                    <h3 class="h5">Products to return</h3>
+                    <p class="text-muted" ng-if="vm.items.length === 0">No products selected yet.</p>
+                    <p class="text-danger" ng-if="vm.errors.items">{{ vm.errors.items }}</p>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            ng-repeat="p in vm.items">
+                            <span><img class="product-thumb me-2" alt="" ng-src="https://placehold.co/50x50?text={{ p.id }}">
+                                {{ p.title }} ({{ p.price | currency }})</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm" ng-click="vm.remove($index)">Remove</button>
+                        </li>
+                    </ul>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input id="name" class="form-control" ng-model="vm.form.name" ng-class="{'is-invalid': vm.errors.name}">
+                            <div class="invalid-feedback">{{ vm.errors.name }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input id="email" type="email" class="form-control" ng-model="vm.form.email" ng-class="{'is-invalid': vm.errors.email}">
+                            <div class="invalid-feedback">{{ vm.errors.email }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="reason" class="form-label">Reason for return</label>
+                            <select id="reason" class="form-select" ng-model="vm.form.reason" ng-options="r for r in vm.reasons"
+                                    ng-class="{'is-invalid': vm.errors.reason}"><option value="">Choose a reason</option></select>
+                            <div class="invalid-feedback">{{ vm.errors.reason }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="condition" class="form-label">Product condition</label>
+                            <select id="condition" class="form-select" ng-model="vm.form.condition" ng-options="c for c in vm.conditions"
+                                    ng-class="{'is-invalid': vm.errors.condition}"><option value="">Choose a condition</option></select>
+                            <div class="invalid-feedback">{{ vm.errors.condition }}</div>
+                        </div>
+                    </div>
+
+                    <label for="comments" class="form-label">Additional details (optional)</label>
+                    <textarea id="comments" rows="2" class="form-control mb-3" ng-model="vm.form.comments"></textarea>
+
+                    <button type="submit" class="btn btn-primary">Submit Return</button>
+                    <p class="alert mt-3 mb-0" ng-if="vm.message" ng-class="'alert-' + vm.message.type">{{ vm.message.text }}</p>
+                </form>
+
+                <h3 class="h5 mt-4">Return Data (JSON)</h3>
+                <pre class="bg-light border rounded p-3" id="returnJson">{{ vm.payload ? (vm.payload | json) : "Submit a valid return to see the JSON." }}</pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p class="mb-0">Penn State Coding Club | IST 256 Group 1</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js"></script>
+    <script src="returns.js"></script>
+</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
