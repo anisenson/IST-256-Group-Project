@@ -1,0 +1,37 @@
+[
+  {
+    "id": "BILL-1",
+    "fullName": "Jordan Lee",
+    "address": "123 College Ave",
+    "city": "State College",
+    "state": "PA",
+    "zip": "16801",
+    "payment": {
+      "cardLast4": "1111",
+      "expiration": "12/28"
+    },
+    "items": [
+      { "id": "P002", "title": "Intro to Python Workshop", "price": 5, "quantity": 1 },
+      { "id": "P008", "title": "Coding Club T-Shirt", "price": 18, "quantity": 1 }
+    ],
+    "shippingMethod": "Standard",
+    "total": 23
+  },
+  {
+    "id": "BILL-2",
+    "fullName": "Sam Patel",
+    "address": "45 Beaver Ave",
+    "city": "State College",
+    "state": "PA",
+    "zip": "16801",
+    "payment": {
+      "cardLast4": "4444",
+      "expiration": "03/27"
+    },
+    "items": [
+      { "id": "P001", "title": "Python Crash Course Book", "price": 29.99, "quantity": 1 }
+    ],
+    "shippingMethod": "Pickup at club meeting",
+    "total": 29.99
+  }
+]
