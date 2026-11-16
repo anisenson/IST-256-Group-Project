@@ -648,6 +648,246 @@ app.delete("/api/billing/:id", async function (req, res) {
 });
 
 // ===========================================================================
+// PRODUCTS AND SHOPPING CART (Nasser Almalki)
+// ===========================================================================
+
+// Turn a products row into the same JSON shape as products.json.
+function toProduct(row) {
+    return {
+        id: row.id,
+        title: row.title,
+        category: row.category,
+        format: row.format,
+        price: Number(row.price), // MySQL returns DECIMAL as text
+        notes: row.notes || ""
+    };
+}
+
+// Read and check product fields. Returns { data } or { error }.
+function readProduct(body) {
+    const b = body || {};
+    const data = {
+        title: text(b.title),
+        category: text(b.category),
+        format: text(b.format),
+        price: Number(b.price),
+        notes: text(b.notes)
+    };
+    if (!data.title || !data.category || !data.format) {
+        return { error: "Title, category, and format are required." };
+    }
+    if (!Number.isFinite(data.price) || data.price < 0) {
+        return { error: "Price must be 0 or more." };
+    }
+    if (data.title.length > 150 || data.category.length > 50 ||
+        data.format.length > 50 || data.notes.length > 255) {
+        return { error: "One of the fields is too long." };
+    }
+    data.price = roundMoney(data.price);
+    return { data: data };
+}
+
+// READ: list every product (the cart page can load these instead of products.json)
+app.get("/api/products", async function (req, res) {
+    const [rows] = await pool.query("SELECT * FROM products ORDER BY id");
+    res.json(rows.map(toProduct));
+});
+
+// READ: one product
+app.get("/api/products/:id", async function (req, res) {
+    const [rows] = await pool.query("SELECT * FROM products WHERE id = ?", [req.params.id]);
+    if (rows.length === 0) {
+        return res.status(404).json({ error: "Product not found." });
+    }
+    res.json(toProduct(rows[0]));
+});
+
+// CREATE: add a new product. The id must look like P009.
+app.post("/api/products", async function (req, res) {
+    const id = text((req.body || {}).id).toUpperCase();
+    if (!/^P\d{3,}$/.test(id)) {
+        return res.status(400).json({ error: "Product id must look like P009." });
+    }
+    const parsed = readProduct(req.body);
+    if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+    }
+    const [taken] = await pool.query("SELECT id FROM products WHERE id = ?", [id]);
+    if (taken.length > 0) {
+        return res.status(409).json({ error: "That product id is already used." });
+    }
+    const p = parsed.data;
+    await pool.query(
+        "INSERT INTO products (id, title, category, format, price, notes) VALUES (?, ?, ?, ?, ?, ?)",
+        [id, p.title, p.category, p.format, p.price, p.notes || null]
+    );
+    res.status(201).json({ id: id, title: p.title, category: p.category, format: p.format, price: p.price, notes: p.notes });
+});
+
+// UPDATE: change a product's details (the id stays the same)
+app.put("/api/products/:id", async function (req, res) {
+    const parsed = readProduct(req.body);
+    if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+    }
+    const p = parsed.data;
+    const [result] = await pool.query(
+        "UPDATE products SET title = ?, category = ?, format = ?, price = ?, notes = ? WHERE id = ?",
+        [p.title, p.category, p.format, p.price, p.notes || null, req.params.id]
+    );
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Product not found." });
+    }
+    res.json({ id: req.params.id, title: p.title, category: p.category, format: p.format, price: p.price, notes: p.notes });
+});
+
+// DELETE: remove a product
+app.delete("/api/products/:id", async function (req, res) {
+    const [result] = await pool.query("DELETE FROM products WHERE id = ?", [req.params.id]);
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Product not found." });
+    }
+    res.status(204).end();
+});
+
+// Turn a carts row and its item rows into JSON. Cart ids look like CART-1.
+function toCart(row, itemRows) {
+    return {
+        id: formatId("CART", row.id),
+        items: itemRows.map(function (item) {
+            return {
+                id: item.product_id,
+                title: item.title,
+                price: Number(item.price),
+                quantity: item.quantity,
+                subtotal: roundMoney(Number(item.price) * item.quantity)
+            };
+        }),
+        total: Number(row.total),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+// Load carts with their items. Pass a number for one cart, or nothing for all.
+async function findCarts(id) {
+    const [rows] =
+        id === undefined
+            ? await pool.query("SELECT * FROM carts ORDER BY id")
+            : await pool.query("SELECT * FROM carts WHERE id = ?", [id]);
+    if (rows.length === 0) {
+        return [];
+    }
+    const [items] = await pool.query(
+        "SELECT * FROM cart_items WHERE cart_id IN (?) ORDER BY id",
+        [rows.map(function (row) { return row.id; })]
+    );
+    return rows.map(function (row) {
+        return toCart(row, items.filter(function (item) { return item.cart_id === row.id; }));
+    });
+}
+
+// Check the cart items. cart.html sends an array of items; { items: [...] } also works.
+// Returns { items, total } or { error }.
+function readCartItems(body) {
+    const list = Array.isArray(body) ? body : (body || {}).items;
+    if (!Array.isArray(list) || list.length === 0) {
+        return { error: "The cart is empty." };
+    }
+    const items = [];
+    let total = 0;
+    for (const raw of list) {
+        const r = raw || {};
+        const item = {
+            id: text(String(r.id || "")),
+            title: text(r.title),
+            price: Number(r.price),
+            quantity: Number(r.quantity)
+        };
+        if (!item.id || !item.title || item.id.length > 10 || item.title.length > 150) {
+            return { error: "Each cart item needs a product id and a title." };
+        }
+        if (!Number.isFinite(item.price) || item.price < 0) {
+            return { error: "Each cart item needs a price of 0 or more." };
+        }
+        if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+            return { error: "Quantity must be a whole number of 1 or more." };
+        }
+        // The server works out the total itself instead of trusting the browser.
+        total += item.price * item.quantity;
+        items.push(item);
+    }
+    return { items: items, total: roundMoney(total) };
+}
+
+// Save cart items for one cart (used by create and update).
+async function insertCartItems(connection, cartId, items) {
+    await connection.query(
+        "INSERT INTO cart_items (cart_id, product_id, title, price, quantity) VALUES ?",
+        [items.map(function (item) {
+            return [cartId, item.id, item.title, item.price, item.quantity];
+        })]
+    );
+}
+
+// READ: list every saved cart
+app.get("/api/cart", async function (req, res) {
+    res.json(await findCarts());
+});
+
+// READ: one cart
+app.get("/api/cart/:id", async function (req, res) {
+    const id = parseId("CART", req.params.id);
+    const found = id === null ? [] : await findCarts(id);
+    if (found.length === 0) {
+        return res.status(404).json({ error: "Cart not found." });
+    }
+    res.json(found[0]);
+});
+
+// CREATE: save the cart sent by the "Submit Cart" button on cart.html
+app.post("/api/cart", async function (req, res) {
+    const parsed = readCartItems(req.body);
+    if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+    }
+    const newId = await inTransaction(async function (connection) {
+        const [result] = await connection.query("INSERT INTO carts (total) VALUES (?)", [parsed.total]);
+        await insertCartItems(connection, result.insertId, parsed.items);
+        return result.insertId;
+    });
+    res.status(201).json((await findCarts(newId))[0]);
+});
+
+// UPDATE: replace the items in a saved cart (for example, new quantities)
+app.put("/api/cart/:id", async function (req, res) {
+    const id = parseId("CART", req.params.id);
+    if (id === null || (await findCarts(id)).length === 0) {
+        return res.status(404).json({ error: "Cart not found." });
+    }
+    const parsed = readCartItems(req.body);
+    if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+    }
+    await inTransaction(async function (connection) {
+        await connection.query("DELETE FROM cart_items WHERE cart_id = ?", [id]);
+        await insertCartItems(connection, id, parsed.items);
+        await connection.query("UPDATE carts SET total = ? WHERE id = ?", [parsed.total, id]);
+    });
+    res.json((await findCarts(id))[0]);
+});
+
+// DELETE: remove a cart. Its cart_items rows go with it (ON DELETE CASCADE).
+app.delete("/api/cart/:id", async function (req, res) {
+    const id = parseId("CART", req.params.id);
+    if (id === null || (await findCarts(id)).length === 0) {
+        return res.status(404).json({ error: "Cart not found." });
+    }
+    await pool.query("DELETE FROM carts WHERE id = ?", [id]);
+    res.status(204).end();
+});
+
+// ===========================================================================
 // Error handler and startup
 // ===========================================================================
 
