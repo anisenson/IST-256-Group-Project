@@ -106,3 +106,73 @@ CREATE TABLE IF NOT EXISTS billing_items (
         FOREIGN KEY (billing_id) REFERENCES billing (id)
         ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+
+-- ---------------------------------------------------------------------------
+-- PRODUCTS, SHOPPING CART, AND SHIPPING (Jason Lin)
+-- ---------------------------------------------------------------------------
+
+-- products: the items sold in the store (same data as products.json)
+CREATE TABLE IF NOT EXISTS products (
+    id        VARCHAR(10)   NOT NULL,   -- ids like "P001"
+    title     VARCHAR(150)  NOT NULL,
+    category  VARCHAR(50)   NOT NULL,
+    format    VARCHAR(50)   NOT NULL,
+    price     DECIMAL(10,2) NOT NULL,
+    notes     VARCHAR(255)  NULL,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- Starting products. INSERT IGNORE skips any product that is already there,
+-- so this file is still safe to run more than once.
+INSERT IGNORE INTO products (id, title, category, format, price, notes) VALUES
+    ('P001', 'Python Crash Course Book',   'Python',     'Book - each',               29.99, 'Beginner book, used in the club''s intro sessions'),
+    ('P002', 'Intro to Python Workshop',   'Python',     'Workshop - per session',     5.00, 'Two-hour hands-on session, bring a laptop'),
+    ('P003', 'HTML and CSS Starter Guide', 'HTML/CSS',   'Printed guide - each',      12.50, 'Covers page structure and styling'),
+    ('P004', 'Bootstrap Layout Workshop',  'HTML/CSS',   'Workshop - per session',     5.00, 'Build a responsive page from scratch'),
+    ('P005', 'JavaScript Practice Pack',   'JavaScript', 'PDF - each',                 8.00, '50 practice problems with solutions'),
+    ('P006', 'SQL Basics Workbook',        'SQL',        'Book - each',               10.00, 'Exercises on queries, joins, and filtering'),
+    ('P007', 'Club Membership',            'Other',      'Membership - per semester', 15.00, 'Access to all workshops and study sessions'),
+    ('P008', 'Coding Club T-Shirt',        'Other',      'Merch - each',              18.00, 'Sizes S to XL');
+
+-- carts: one row for each cart submitted on cart.html
+CREATE TABLE IF NOT EXISTS carts (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    total       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME      NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- cart_items: the products inside one cart (many rows per cart)
+CREATE TABLE IF NOT EXISTS cart_items (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    cart_id     INT UNSIGNED  NOT NULL,
+    product_id  VARCHAR(10)   NOT NULL,
+    title       VARCHAR(150)  NOT NULL,
+    price       DECIMAL(10,2) NOT NULL,
+    quantity    INT UNSIGNED  NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_cart_items_cart
+        FOREIGN KEY (cart_id) REFERENCES carts (id)
+        ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+-- shipping: shipping address details for an order
+CREATE TABLE IF NOT EXISTS shipping (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    full_name   VARCHAR(100)  NOT NULL,
+    address     VARCHAR(150)  NOT NULL,
+    city        VARCHAR(60)   NOT NULL,
+    state       VARCHAR(30)   NOT NULL,
+    zip         VARCHAR(10)   NOT NULL,
+    country     VARCHAR(60)   NOT NULL DEFAULT 'USA',
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- One sample row, only added if the table is empty (safe to re-run).
+INSERT INTO shipping (full_name, address, city, state, zip)
+SELECT 'JayJay', '67 College Ave', 'State College', 'PA', '16801'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM shipping);
