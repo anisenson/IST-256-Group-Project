@@ -15,7 +15,7 @@ angular.module("returnsApp", []).controller("ReturnsController", function ($scop
     vm.payload = null;
 
     // jQuery: load the products
-    $.getJSON("products.json").done(function (data) {
+    $.getJSON("api/products").done(function (data) {
         $scope.$apply(function () {
             products = data;
             vm.search();
