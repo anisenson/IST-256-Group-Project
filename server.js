@@ -31,6 +31,7 @@
 require("dotenv").config(); // load DB_* settings from .env
 const express = require("express");
 const { randomUUID } = require("crypto");
+const path = require("path");
 const pool = require("./db"); // shared MySQL connection pool
 
 const app = express();
@@ -39,9 +40,9 @@ const PORT = process.env.PORT || 3000;
 // Parse JSON request bodies into req.body.
 app.use(express.json());
 
-// Serve the HTML/CSS/JS pages from this folder. dotfiles: "deny" makes sure a
-// file like .env can never be downloaded through the web server.
-app.use(express.static(__dirname, { dotfiles: "deny" }));
+// Serve the HTML/CSS/JS pages from the /public folder only.
+// dotfiles: "deny" makes sure a file like .env can never be downloaded.
+app.use(express.static(path.join(__dirname, "public"), { dotfiles: "deny" }));
 
 // ===========================================================================
 // Shared helpers
@@ -886,7 +887,344 @@ app.delete("/api/cart/:id", async function (req, res) {
     await pool.query("DELETE FROM carts WHERE id = ?", [id]);
     res.status(204).end();
 });
+// ===========================================================================
+// SHIPPING
+// One row per shipping address saved from the shipping form.
+// ===========================================================================
 
+const SHIPPING_LIMITS = { fullName: 100, address: 150, city: 60, state: 30, zip: 10, country: 60 };
+
+// Turn a shipping row into JSON. Ids look like SHIP-1.
+function toShipping(row) {
+    return {
+        id: formatId("SHIP", row.id),
+        fullName: row.full_name,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        zip: row.zip,
+        country: row.country,
+        createdAt: row.created_at
+    };
+}
+
+// Read the shipping fields from a request body.
+function readShipping(body) {
+    const b = body || {};
+    return {
+        fullName: text(b.fullName),
+        address: text(b.address),
+        city: text(b.city),
+        state: text(b.state),
+        zip: text(b.zip),
+        country: text(b.country) || "USA"
+    };
+}
+
+// Returns an error message, or "" when everything is fine.
+function validateShipping(data) {
+    if (!data.fullName || !data.address || !data.city || !data.state || !data.zip) {
+        return "Name, address, city, state and ZIP are required.";
+    }
+    if (!/^\d{5}(-\d{4})?$/.test(data.zip)) {
+        return "ZIP code must look like 16801 or 16801-1234.";
+    }
+    const tooLong = checkLengths(data, SHIPPING_LIMITS);
+    return tooLong || "";
+}
+
+// READ: list every saved shipping address
+app.get("/api/shipping", async function (req, res) {
+    const [rows] = await pool.query("SELECT * FROM shipping ORDER BY id");
+    res.json(rows.map(toShipping));
+});
+
+// READ: one shipping address
+app.get("/api/shipping/:id", async function (req, res) {
+    const id = parseId("SHIP", req.params.id);
+    const [rows] = id === null ? [[]] : await pool.query("SELECT * FROM shipping WHERE id = ?", [id]);
+    if (rows.length === 0) {
+        return res.status(404).json({ error: "Shipping record not found." });
+    }
+    res.json(toShipping(rows[0]));
+});
+
+// CREATE: save a new shipping address
+app.post("/api/shipping", async function (req, res) {
+    const data = readShipping(req.body);
+    const problem = validateShipping(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+
+    const [result] = await pool.query(
+        "INSERT INTO shipping (full_name, address, city, state, zip, country) VALUES (?, ?, ?, ?, ?, ?)",
+        [data.fullName, data.address, data.city, data.state, data.zip, data.country]
+    );
+    const [rows] = await pool.query("SELECT * FROM shipping WHERE id = ?", [result.insertId]);
+    res.status(201).json(toShipping(rows[0]));
+});
+
+// UPDATE: change a saved shipping address
+app.put("/api/shipping/:id", async function (req, res) {
+    const id = parseId("SHIP", req.params.id);
+    const data = readShipping(req.body);
+    const problem = validateShipping(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+
+    const [result] = id === null ? [{ affectedRows: 0 }] : await pool.query(
+        "UPDATE shipping SET full_name = ?, address = ?, city = ?, state = ?, zip = ?, country = ? WHERE id = ?",
+        [data.fullName, data.address, data.city, data.state, data.zip, data.country, id]
+    );
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Shipping record not found." });
+    }
+    const [rows] = await pool.query("SELECT * FROM shipping WHERE id = ?", [id]);
+    res.json(toShipping(rows[0]));
+});
+
+// DELETE: remove a saved shipping address
+app.delete("/api/shipping/:id", async function (req, res) {
+    const id = parseId("SHIP", req.params.id);
+    const [result] = id === null ? [{ affectedRows: 0 }] : await pool.query("DELETE FROM shipping WHERE id = ?", [id]);
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Shipping record not found." });
+    }
+    res.status(204).end();
+});
+
+// ===========================================================================
+// RSVPS  (rsvp.html)
+// ===========================================================================
+
+const RSVP_LIMITS = { name: 100, email: 254, activityId: 10, activityTitle: 150, participation: 50, notes: 500 };
+
+function toRsvp(row) {
+    return {
+        id: formatId("RSVP", row.id),
+        name: row.name,
+        email: row.email,
+        activityId: row.activity_id,
+        activityTitle: row.activity_title,
+        participation: row.participation,
+        notes: row.notes || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+function readRsvpFields(body) {
+    const b = body || {};
+    return {
+        name: text(b.name),
+        email: text(b.email),
+        activityId: text(b.activityId),
+        activityTitle: text(b.activityTitle),
+        participation: text(b.participation),
+        notes: text(b.notes)
+    };
+}
+
+function validateRsvp(data) {
+    if (!data.name || !data.email || !data.activityId || !data.activityTitle || !data.participation) {
+        return "Name, email, activity and participation are required.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        return "A valid email address is required.";
+    }
+    return checkLengths(data, RSVP_LIMITS);
+}
+
+async function findRsvps(id) {
+    const [rows] =
+        id === undefined
+            ? await pool.query("SELECT * FROM rsvps ORDER BY id")
+            : await pool.query("SELECT * FROM rsvps WHERE id = ?", [id]);
+    return rows.map(toRsvp);
+}
+
+// READ (list)
+app.get("/api/rsvp", async function (req, res) {
+    res.json(await findRsvps());
+});
+
+// READ (one)
+app.get("/api/rsvp/:id", async function (req, res) {
+    const id = parseId("RSVP", req.params.id);
+    const found = id === null ? [] : await findRsvps(id);
+    if (found.length === 0) {
+        return res.status(404).json({ error: "RSVP not found." });
+    }
+    res.json(found[0]);
+});
+
+// CREATE: the RSVP form on rsvp.html posts here
+app.post("/api/rsvp", async function (req, res) {
+    const data = readRsvpFields(req.body);
+    const problem = validateRsvp(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+    const [result] = await pool.query(
+        "INSERT INTO rsvps (name, email, activity_id, activity_title, participation, notes) VALUES (?, ?, ?, ?, ?, ?)",
+        [data.name, data.email, data.activityId, data.activityTitle, data.participation, data.notes || null]
+    );
+    res.status(201).json((await findRsvps(result.insertId))[0]);
+});
+
+// UPDATE
+app.put("/api/rsvp/:id", async function (req, res) {
+    const id = parseId("RSVP", req.params.id);
+    if (id === null || (await findRsvps(id)).length === 0) {
+        return res.status(404).json({ error: "RSVP not found." });
+    }
+    const data = readRsvpFields(req.body);
+    const problem = validateRsvp(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+    await pool.query(
+        "UPDATE rsvps SET name = ?, email = ?, activity_id = ?, activity_title = ?, participation = ?, notes = ? WHERE id = ?",
+        [data.name, data.email, data.activityId, data.activityTitle, data.participation, data.notes || null, id]
+    );
+    res.json((await findRsvps(id))[0]);
+});
+
+// DELETE
+app.delete("/api/rsvp/:id", async function (req, res) {
+    const id = parseId("RSVP", req.params.id);
+    if (id === null || (await findRsvps(id)).length === 0) {
+        return res.status(404).json({ error: "RSVP not found." });
+    }
+    await pool.query("DELETE FROM rsvps WHERE id = ?", [id]);
+    res.status(204).end();
+});
+
+// ===========================================================================
+// MEMBERS  (signup.html)
+// ===========================================================================
+
+const MEMBER_LIMITS = { fullName: 100, email: 254, address: 255, phone: 30 };
+
+function toMember(row) {
+    return {
+        id: formatId("MEM", row.id),
+        fullName: row.full_name,
+        email: row.email,
+        age: row.age,
+        address: row.address,
+        phone: row.phone || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+function readMemberFields(body) {
+    const b = body || {};
+    return {
+        fullName: text(b.fullName),
+        email: text(b.email),
+        age: Number(b.age),
+        address: text(b.address),
+        phone: text(b.phone)
+    };
+}
+
+// Server-side validation (same rules as validation.js, in case the page is skipped).
+function validateMember(data) {
+    if (!data.fullName || !data.email || !data.address) {
+        return "Name, email and address are required.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        return "A valid email address is required.";
+    }
+    if (!Number.isInteger(data.age) || data.age < 16 || data.age > 99) {
+        return "Age must be a whole number from 16 to 99.";
+    }
+    return checkLengths(data, MEMBER_LIMITS);
+}
+
+// One member (numeric id) or all members (no argument). Always returns an array.
+async function findMembers(id) {
+    const [rows] =
+        id === undefined
+            ? await pool.query("SELECT * FROM members ORDER BY id")
+            : await pool.query("SELECT * FROM members WHERE id = ?", [id]);
+    return rows.map(toMember);
+}
+
+// READ (list)
+app.get("/api/members", async function (req, res) {
+    res.json(await findMembers());
+});
+
+// READ (one)
+app.get("/api/members/:id", async function (req, res) {
+    const id = parseId("MEM", req.params.id);
+    const found = id === null ? [] : await findMembers(id);
+    if (found.length === 0) {
+        return res.status(404).json({ error: "Member not found." });
+    }
+    res.json(found[0]);
+});
+
+// CREATE
+app.post("/api/members", async function (req, res) {
+    const data = readMemberFields(req.body);
+    const problem = validateMember(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+    try {
+        const [result] = await pool.query(
+            "INSERT INTO members (full_name, email, age, address, phone) VALUES (?, ?, ?, ?, ?)",
+            [data.fullName, data.email, data.age, data.address, data.phone || null]
+        );
+        res.status(201).json((await findMembers(result.insertId))[0]);
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ error: "That email is already signed up." });
+        }
+        throw error; // anything else goes to the error handler (500)
+    }
+});
+
+// UPDATE
+app.put("/api/members/:id", async function (req, res) {
+    const id = parseId("MEM", req.params.id);
+    if (id === null || (await findMembers(id)).length === 0) {
+        return res.status(404).json({ error: "Member not found." });
+    }
+    const data = readMemberFields(req.body);
+    const problem = validateMember(data);
+    if (problem) {
+        return res.status(400).json({ error: problem });
+    }
+    try {
+        await pool.query(
+            "UPDATE members SET full_name = ?, email = ?, age = ?, address = ?, phone = ? WHERE id = ?",
+            [data.fullName, data.email, data.age, data.address, data.phone || null, id]
+        );
+        res.json((await findMembers(id))[0]);
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ error: "That email is already signed up." });
+        }
+        throw error;
+    }
+});
+
+// DELETE
+app.delete("/api/members/:id", async function (req, res) {
+    const id = parseId("MEM", req.params.id);
+    if (id === null || (await findMembers(id)).length === 0) {
+        return res.status(404).json({ error: "Member not found." });
+    }
+    await pool.query("DELETE FROM members WHERE id = ?", [id]);
+    res.status(204).end();
+});
 // ===========================================================================
 // Error handler and startup
 // ===========================================================================

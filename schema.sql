@@ -176,3 +176,38 @@ INSERT INTO shipping (full_name, address, city, state, zip)
 SELECT 'JayJay', '67 College Ave', 'State College', 'PA', '16801'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM shipping);
+
+CREATE TABLE IF NOT EXISTS rsvps (
+    id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(100)  NOT NULL,
+    email           VARCHAR(254)  NOT NULL,
+    activity_id     VARCHAR(10)   NOT NULL,
+    activity_title  VARCHAR(150)  NOT NULL,
+    participation   VARCHAR(50)   NOT NULL,
+    notes           VARCHAR(500)  NULL,
+    created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME      NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- members: club sign-ups from signup.html
+-- email is UNIQUE so the same person cannot sign up twice.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS members (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    full_name   VARCHAR(100)  NOT NULL,
+    email       VARCHAR(254)  NOT NULL,
+    age         TINYINT UNSIGNED NOT NULL,
+    address     VARCHAR(255)  NOT NULL,
+    phone       VARCHAR(30)   NULL,
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME      NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_members_email (email)
+) ENGINE = InnoDB;
+
+-- Sample rows from member.json (INSERT IGNORE keeps re-runs safe).
+INSERT IGNORE INTO members (full_name, email, age, address, phone) VALUES
+    ('Alex Johnson', 'alex.johnson@example.com', 19, '123 College Ave, State College, PA', '814-555-1234'),
+    ('Maria Lopez',  'maria.lopez@example.com',  21, '45 Beaver Ave, State College, PA', NULL);
