@@ -6,64 +6,59 @@ let editingIndex = -1;
 const memberTableBody = document.getElementById("memberTableBody");
 const jsonOutput = document.getElementById("jsonOutput");
 
-// Load saved browser data, or load member.json on first use.
 
+
+// Load members from the database through the API.
 async function loadMembers() {
     try {
-        const stored = localStorage.getItem("clubMembers");
-        if (stored !== null) {
-            const saved = JSON.parse(stored);
-            if (!Array.isArray(saved)) {
-                throw new Error("Saved member data must be an array.");
-            }
-            members = saved;
-        } else {
-            const response = await fetch("member.json");
-            if (!response.ok) {
-                throw new Error("Could not load member.json.");
-            }
-            const data = await response.json();
-            if (!Array.isArray(data)) {
-                throw new Error("member.json must contain an array.");
-
-            }
-            members = data;
+        const response = await fetch("/api/members");
+        if (!response.ok) {
+            throw new Error("Could not load members.");
         }
+        members = await response.json();
         renderTable();
         renderJson();
     } catch (error) {
         console.error(error);
-        alert("Could not load member data. Please use Live Server and check member.json.");
-
+        alert("Could not load members. Is the server running (node server.js)?");
     }
 }
 
-// Add a new member or update the selected member.
-function saveMember(member) {
-    const updatedMembers = members.slice();
+// Create a new member (POST) or update the selected one (PUT).
+// Returns "" on success, or an error message to show the user.
+async function saveMember(member) {
+    const editing = editingIndex !== -1;
+    const url = editing ? "/api/members/" + encodeURIComponent(members[editingIndex].id) : "/api/members";
 
-    if (editingIndex === -1) {
-        updatedMembers.push(member);
-    } else {
-        updatedMembers[editingIndex] = member;
-    }
-
-    // Save before changing the displayed data.
     try {
-        localStorage.setItem(
-            "clubMembers",
-            JSON.stringify(updatedMembers)
-        );
+        const response = await fetch(url, {
+            method: editing ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(member)
+        });
+        if (!response.ok) {
+            const body = await response.json().catch(function () { return {}; });
+            return body.error || "Could not save.";
+        }
     } catch (error) {
-        return false;
+        return "Could not reach the server.";
     }
 
-    members = updatedMembers;
     editingIndex = -1;
+    await loadMembers(); // reload so the table shows what is really in the database
+    return "";
+}
 
-    renderTable();
-    renderJson();
-    return true;
+// Delete a member (DELETE), then reload the table.
+async function deleteMember(index) {
+    if (!confirm("Delete " + members[index].fullName + "?")) {
+        return;
+    }
+    const response = await fetch("/api/members/" + encodeURIComponent(members[index].id), { method: "DELETE" });
+    if (response.ok) {
+        editingIndex = -1;
+        await loadMembers();
+    }
 }
 
 // Display user input as plain text.
@@ -112,7 +107,18 @@ function renderTable() {
         });
 
         actionCell.appendChild(editButton);
-        row.appendChild(actionCell);
+
+        const deleteButton = document.createElement("button");
+        
+        deleteButton.type = "button";
+        deleteButton.className = "btn btn-outline-danger btn-sm ms-1";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", function () {
+            deleteMember(index);
+        });
+        actionCell.appendChild(deleteButton);
+
+        row.appendChild(actionCell);            
         memberTableBody.appendChild(row);
     });
 }

@@ -128,7 +128,7 @@ function validatePhone() {
 }
 
 // Validate every field before adding or updating a member.
-form.addEventListener("submit", function (event) {
+form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const nameOk = validateName();
@@ -154,9 +154,10 @@ form.addEventListener("submit", function (event) {
 
     const updating = editingIndex !== -1;
 
-    if (!saveMember(member)) {
+    const error = await saveMember(member);
+    if (error) {
         message.className = "alert alert-danger mt-3";
-        message.textContent = "Could not save. Check your browser storage settings.";
+        message.textContent = error;
         return;
     }
 
