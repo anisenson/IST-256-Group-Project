@@ -301,7 +301,7 @@ function loadResources() {
         return;
     }
  
-    $.getJSON("products.json")
+    $.getJSON("api/products")
         .done(function (data) {
             resources = Array.isArray(data) ? data.map(normalizeResource) : [];
             runSearch();

@@ -10,7 +10,7 @@ function RSVPApp() {
     const [loadError, setLoadError] = React.useState("");
 
     React.useEffect(function () {
-        $.getJSON("products.json")
+        $.getJSON("api/products")
             .done(function (products) {
                 // Only workshops can be RSVPed to (P002 and P004 right now)
                 const workshops = products.filter(function (item) {
