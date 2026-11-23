@@ -1,0 +1,104 @@
+<!--
+Coding Club RSVP Page
+
+TODO:
+- Add an RSVP form with name, email, activity, participation type, and optional notes.
+- Use JavaScript to validate the form and show error and success messages.
+- Use React or AngularJS to manage the form data and create a JSON object.
+- Use jQuery to interact with existing resources or activities.
+- Use AJAX to send the JSON data to a REST API.
+
+-->
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <title>Upcoming Events</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS v5.3.8 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="style.css">
+
+
+</head>
+
+<body>
+
+
+    <!--Nav Bar -->
+    <header>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">Penn State Coding Club</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu"
+                    aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMenu">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="signup.html">Member Signup</a></li>
+                        <li class="nav-item"><a class="nav-link" href="resources.html">Coding Resources</a></li>
+                        <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+                        <li class="nav-item"><a class="nav-link" href="cart.html">Shopping Cart</a></li>
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="rsvp.html">Upcoming Events</a></li>
+                        <li class="nav-item"><a class="nav-link" href="submission.html">Submit Proposal Event</a></li>
+                        <li class="nav-item"><a class="nav-link" href="billing.html">Billing</a></li>
+                        <li class="nav-item"><a class="nav-link" href="returns.html">Returns</a></li>
+                        <li class="nav-item"><a class="nav-link" href="approval.html">Proposed Event Status</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+
+
+    <main>
+        <div class="container">
+
+            <!-- Page heading -->
+            <div class="row justify-content-center py-5">
+                <div class="col-12 col-md-8 text-center">
+                    <h1>Upcoming Events</h1>
+                    <p>View upcoming club events and rsvp today!</p>
+                </div>
+            </div>
+            
+            <div id="rsvpApp">Loading RSVP form...</div>
+
+        </div>
+
+
+
+
+    </main>
+    <footer>
+        <p class="mb-0">Penn State Coding Club | IST 256 Group 1</p>
+    </footer>
+
+
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+
+    <script src="rsvp.js"></script>
+</body>
+</html>
