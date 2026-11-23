@@ -61,10 +61,11 @@ angular.module('billingApp', [])
       { name: 'Overnight', cost: 24.99 }
     ];
 
-    // Loads cart items saved by the cart page
+    // Loads cart items saved by the cart page. cart.js saves them under the key
+    // "clubCart" as { id, title, category, format, price, quantity }.
     vm.items = [];
     try {
-      vm.items = JSON.parse(localStorage.getItem('cart')) || [];
+      vm.items = JSON.parse(localStorage.getItem('clubCart')) || [];
     } catch (e) {
       vm.items = [];
     }

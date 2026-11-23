@@ -163,7 +163,7 @@
 
             <!-- One row per cart item -->
             <li class="list-group-item d-flex justify-content-between" ng-repeat="item in vm.items">
-              <span>{{ item.name }} &times; {{ item.quantity }}</span>
+              <span>{{ item.title }} &times; {{ item.quantity }}</span>
               <span>{{ item.price * item.quantity | currency }}</span>
             </li>
 

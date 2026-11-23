@@ -285,29 +285,31 @@ function submitCart() {
         });
 }
  
-//Uses local browser data if it exists or otherwise load resources.json file with AJAX. If neither is available it shows an error message.
+//Loads the product list from the server (api/products) so the cart always shows the real database.
+//If the server cannot be reached, it falls back to the copy saved in the browser (localStorage).
+//If neither is available it shows an error message.
 function loadResources() {
-    let saved = null;
- 
-    try {
-        saved = JSON.parse(localStorage.getItem(RESOURCES_KEY));
-    } catch (error) {
-        saved = null;
-    }
- 
-    if (Array.isArray(saved)) {
-        resources = saved.map(normalizeResource);
-        runSearch();
-        return;
-    }
- 
     $.getJSON("api/products")
         .done(function (data) {
             resources = Array.isArray(data) ? data.map(normalizeResource) : [];
             runSearch();
         })
         .fail(function () {
-            $("#searchMessage").text("Could not load resources. Open the site with a local server such as Live Server.");
+            let saved = null;
+
+            try {
+                saved = JSON.parse(localStorage.getItem(RESOURCES_KEY));
+            } catch (error) {
+                saved = null;
+            }
+
+            if (Array.isArray(saved)) {
+                resources = saved.map(normalizeResource);
+                runSearch();
+                return;
+            }
+
+            $("#searchMessage").text("Could not load resources. Start the server with npm.cmd start and open http://localhost:3000.");
             renderProducts([]);
         });
 }

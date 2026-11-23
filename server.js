@@ -40,6 +40,25 @@ const PORT = process.env.PORT || 3000;
 // Parse JSON request bodies into req.body.
 app.use(express.json());
 
+// Print one line for every API request once it finishes, for example:
+//     [14:02:31] [API] POST /api/members -> 201 (12 ms)
+// Together with the [DB] lines from db.js, this is the server log for screenshots.
+// Set DB_LOG=off in .env to switch it off.
+app.use("/api", function (req, res, next) {
+    if (process.env.DB_LOG === "off") {
+        return next();
+    }
+    const started = Date.now();
+    res.on("finish", function () {
+        console.log(
+            "[" + new Date().toLocaleTimeString() + "] [API] " +
+            req.method + " " + req.originalUrl + " -> " + res.statusCode +
+            " (" + (Date.now() - started) + " ms)"
+        );
+    });
+    next();
+});
+
 // Serve the HTML/CSS/JS pages from the /public folder only.
 // dotfiles: "deny" makes sure a file like .env can never be downloaded.
 app.use(express.static(path.join(__dirname, "public"), { dotfiles: "deny" }));
